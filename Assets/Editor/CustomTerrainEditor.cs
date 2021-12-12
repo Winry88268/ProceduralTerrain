@@ -14,6 +14,9 @@ public class CustomTerrainEditor : Editor
     SerializedProperty perlinYScale;
     SerializedProperty perlinXOffset;
     SerializedProperty perlinYOffset;
+    SerializedProperty perlinOctaves;
+    SerializedProperty perlinPersistance;
+    SerializedProperty perlinHeightScale;
 
     //GUI Fold Outs ------------
     bool showRandom = false;
@@ -29,6 +32,9 @@ public class CustomTerrainEditor : Editor
         this.perlinYScale = serializedObject.FindProperty("perlinYScale");
         this.perlinXOffset = serializedObject.FindProperty("perlinXOffset");
         this.perlinYOffset = serializedObject.FindProperty("perlinYOffset");
+        this.perlinOctaves = serializedObject.FindProperty("perlinOctaves");
+        this.perlinPersistance = serializedObject.FindProperty("perlinPersistance");
+        this.perlinHeightScale = serializedObject.FindProperty("perlinHeightScale");
     }
 
     public override void OnInspectorGUI()
@@ -73,6 +79,9 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.Slider(this.perlinYScale, 0, 1, new GUIContent("Y Scale"));
             EditorGUILayout.IntSlider(this.perlinXOffset, 0, 10000, new GUIContent("X Offset"));
             EditorGUILayout.IntSlider(this.perlinYOffset, 0, 10000, new GUIContent("Y Offset"));
+            EditorGUILayout.IntSlider(this.perlinOctaves, 1, 10, new GUIContent("Octaves"));
+            EditorGUILayout.Slider(this.perlinPersistance, 0.1f, 10, new GUIContent("Persistance"));
+            EditorGUILayout.Slider(this.perlinHeightScale, 0, 1, new GUIContent("Height Scale"));
             
             if (GUILayout.Button("Perlin"))
             {
