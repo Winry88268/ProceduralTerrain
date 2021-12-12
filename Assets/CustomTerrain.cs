@@ -14,12 +14,12 @@ public class CustomTerrain : MonoBehaviour
     //Perlin Noise ------------------------------------------
     public float perlinXScale = 0.01f;
     public float perlinYScale = 0.01f;
+    public int perlinXOffset = 0;
+    public int perlinYOffset = 0;
     
     public Terrain terrain;
     public TerrainData terrainData;
 
-
- 
     private void Awake() 
     {
         SerializedObject tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
@@ -103,10 +103,13 @@ public class CustomTerrain : MonoBehaviour
         {
             for (int x = 0; x < heightMapResolution; x++)
             {
-                heightMap[x, y] = Mathf.PerlinNoise(x * this.perlinXScale, y * this.perlinYScale);
+                heightMap[x, y] = Mathf.PerlinNoise((x + this.perlinXOffset) * this.perlinXScale, 
+                                                    (y + this.perlinYOffset) * this.perlinYScale);
             }
         }
+        this.terrainData.SetHeights(0, 0, heightMap);
     }
+
 
     public void ResetTerrain()
     {
