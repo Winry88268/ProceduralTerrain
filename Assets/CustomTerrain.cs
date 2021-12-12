@@ -9,9 +9,11 @@ public class CustomTerrain : MonoBehaviour
 {
     public Texture2D heightMapImage;
     public Vector3 heightMapScale = new Vector3(1, 1, 1);
-    public Vector2 randomHeightRange = new Vector2(0,0.1f);    
+    public Vector2 randomHeightRange = new Vector2(0,0.1f);
+
+    public bool resetTerrain = true;    
     
-    //Perlin Noise ------------------------------------------
+    //  Single Perlin Noise  --------------------
     public float perlinXScale = 0.01f;
     public float perlinYScale = 0.01f;
     public int perlinXOffset = 0;
@@ -20,8 +22,28 @@ public class CustomTerrain : MonoBehaviour
     public float perlinPersistance = 8f;
     public float perlinHeightScale = 0.09f;
     
+    //  Multiple Perlin Noise  ------------------
+    [System.Serializable]
+    public class PerlinParameters
+    {
+        public float mPerlinXScale = 0.01f;
+        public float mPerlinYScale = 0.01f;
+        public int mPerlinXOffset = 0;
+        public int mPerlinYOffset = 0;
+        public int mPerlinOctaves = 3;
+        public float mPerlinPersistance = 8f;
+        public float mPerlinHeightScale = 0.09f;
+        public bool remove = false;
+    }
+
+    public List<PerlinParameters> perlinParameters = new List<PerlinParameters>()
+    {
+        new PerlinParameters()  //  Initialize Index 0  --  Table cannot be Empty
+    };
+
     public Terrain terrain;
     public TerrainData terrainData;
+    public int heightMapResolution;
 
     private void Awake() 
     {
@@ -42,6 +64,7 @@ public class CustomTerrain : MonoBehaviour
         Debug.Log("Terrain Data Init");
         this.terrain = this.GetComponent<Terrain>();
         this.terrainData = Terrain.activeTerrain.terrainData;
+        this.heightMapResolution = this.terrainData.heightmapResolution;
     }
 
     void AddTag(SerializedProperty tagsProp, string newTag)
@@ -61,18 +84,26 @@ public class CustomTerrain : MonoBehaviour
             newTagProp.stringValue = newTag;
         }
     }
+
+    float[,] GetHeightMap()
+    {
+        if (this.resetTerrain)
+        {
+            return new float[this.heightMapResolution, this.heightMapResolution];
+        }
+        else
+            return this.terrainData.GetHeights(0, 0, this.heightMapResolution, this.heightMapResolution);
+    }
     
     public void RandomTerrain()
     {
-        int heightMapResolution = this.terrainData.heightmapResolution;
+        float[,] heightMap = GetHeightMap();
 
-        float[,] heightMap = this.terrainData.GetHeights(0, 0, heightMapResolution, heightMapResolution);
-
-        for (int x = 0; x < heightMapResolution; x++)
+        for (int x = 0; x < this.heightMapResolution; x++)
         {
-            for (int y = 0; y < heightMapResolution; y++)
+            for (int y = 0; y < this.heightMapResolution; y++)
             {
-                heightMap[x, y] += UnityEngine.Random.Range(randomHeightRange.x, randomHeightRange.y);
+                heightMap[ x, y ] += UnityEngine.Random.Range(randomHeightRange.x, randomHeightRange.y);
             }
         }
         this.terrainData.SetHeights(0, 0, heightMap);
@@ -80,17 +111,15 @@ public class CustomTerrain : MonoBehaviour
 
     public void LoadTexture()
     {
-        int heightMapResolution = this.terrainData.heightmapResolution;
+        float[,] heightMap = GetHeightMap();
 
-        float[,] heightMap = new float[heightMapResolution, heightMapResolution];
-
-        for (int x = 0; x < heightMapResolution; x++)
+        for (int x = 0; x < this.heightMapResolution; x++)
         {
-            for (int y = 0; y < heightMapResolution; y++)
+            for (int y = 0; y < this.heightMapResolution; y++)
             {
-                heightMap[x, y] = heightMapImage.GetPixel((int)(x * this.heightMapScale.x),
-                                                          (int)(y * this.heightMapScale.z)).grayscale
-                                                                  * this.heightMapScale.y;  
+                heightMap[ x, y ] += heightMapImage.GetPixel((int)(x * this.heightMapScale.x),
+                                                             (int)(y * this.heightMapScale.z)).grayscale
+                                                                     * this.heightMapScale.y;  
             }
         }
         this.terrainData.SetHeights(0, 0, heightMap);
@@ -98,34 +127,74 @@ public class CustomTerrain : MonoBehaviour
 
     public void Perlin()
     {
-        int heightMapResolution = this.terrainData.heightmapResolution;
-
-        float[,] heightMap = this.terrainData.GetHeights(0, 0, heightMapResolution, heightMapResolution);
+        float[,] heightMap = GetHeightMap();
     
-        for (int y = 0; y < heightMapResolution; y++)
+        for (int y = 0; y < this.heightMapResolution; y++)
         {
-            for (int x = 0; x < heightMapResolution; x++)
+            for (int x = 0; x < this.heightMapResolution; x++)
             {
-                heightMap[x, y] = Utils.fBM((x + this.perlinXOffset) * this.perlinXScale,
-                                            (y + this.perlinYOffset) * this.perlinYScale,
-                                                 this.perlinOctaves,
-                                                 this.perlinPersistance) * this.perlinHeightScale;
+                heightMap[ x, y ] += Utils.fBM((x + this.perlinXOffset) * this.perlinXScale,
+                                               (y + this.perlinYOffset) * this.perlinYScale,
+                                                    this.perlinOctaves,
+                                                    this.perlinPersistance) * this.perlinHeightScale;
             }
         }
         this.terrainData.SetHeights(0, 0, heightMap);
     }
 
+    public void MultiplePerlinTerrain()
+    {
+        float[,] heightMap = GetHeightMap();
+    
+        for (int y = 0; y < this.heightMapResolution; y++)
+        {
+            for (int x = 0; x < this.heightMapResolution; x++)
+            {
+                foreach (PerlinParameters p in this.perlinParameters)
+                {
+                    heightMap[ x, y ] += Utils.fBM((x + p.mPerlinXOffset) * p.mPerlinXScale,
+                                                   (y + p.mPerlinYOffset) * p.mPerlinYScale,
+                                                        p.mPerlinOctaves,
+                                                        p.mPerlinPersistance) * p.mPerlinHeightScale;
+                }
+            }
+        }
+        this.terrainData.SetHeights(0, 0, heightMap);
+    }
+
+    public void AddNewPerlin()
+    {
+        this.perlinParameters.Add(new PerlinParameters());
+    }
+
+    public void RemovePerlin()
+    {
+        List<PerlinParameters> keptPerlinParameters = new List<PerlinParameters>();
+        for (int i = 0; i < this.perlinParameters.Count; i++)
+        {
+            if (!this.perlinParameters[i].remove)
+            {
+                keptPerlinParameters.Add(this.perlinParameters[i]);
+            }
+        }
+
+        if (keptPerlinParameters.Count == 0)  //  0 Elements retained
+        {
+            keptPerlinParameters.Add(this.perlinParameters[0]);  //  Always Retain Index 0  --  Table cannot be Empty
+        }
+
+        this.perlinParameters = keptPerlinParameters;
+    }
+
     public void ResetTerrain()
     {
-        int heightMapResolution = this.terrainData.heightmapResolution;
+        float[,] heightMap = new float[this.heightMapResolution, this.heightMapResolution];
 
-        float[,] heightMap = new float[heightMapResolution, heightMapResolution];
-
-        for (int x = 0; x < heightMapResolution; x++)
+        for (int x = 0; x < this.heightMapResolution; x++)
         {
-            for (int y = 0; y < heightMapResolution; y++)
+            for (int y = 0; y < this.heightMapResolution; y++)
             {
-                heightMap[x, y] = 0;
+                heightMap[ x, y ] = 0;
             }
         }
         this.terrainData.SetHeights(0, 0, heightMap);
