@@ -11,6 +11,7 @@ public class CustomTerrainEditor : Editor
     SerializedProperty randomHeightRange;
     SerializedProperty heightMapScale;
     SerializedProperty heightMapImage;
+    //  Perlin Properties  ----------------------
     SerializedProperty perlinXScale;
     SerializedProperty perlinYScale;
     SerializedProperty perlinXOffset;
@@ -21,6 +22,12 @@ public class CustomTerrainEditor : Editor
 
     GUITableState perlinParameterTable;
     SerializedProperty perlinParameters;
+    //  Voronoi Properties  ---------------------
+    SerializedProperty voronoiCount;
+    SerializedProperty voronoiFallOff;
+    SerializedProperty voronoiDropOff;
+    SerializedProperty voronoiMinHeight;
+    SerializedProperty voronoiMaxHeight;
 
     //  GUI Fold Outs  --------------------------
     bool showRandom = false;
@@ -31,10 +38,12 @@ public class CustomTerrainEditor : Editor
 
     private void OnEnable() 
     {
+        //  GUI Properties  ---------------------
         this.resetTerrain = serializedObject.FindProperty("resetTerrain");
         this.randomHeightRange = serializedObject.FindProperty("randomHeightRange");
         this.heightMapScale = serializedObject.FindProperty("heightMapScale");
         this.heightMapImage = serializedObject.FindProperty("heightMapImage");
+        //  Perlin Properties  ------------------
         this.perlinXScale = serializedObject.FindProperty("perlinXScale");
         this.perlinYScale = serializedObject.FindProperty("perlinYScale");
         this.perlinXOffset = serializedObject.FindProperty("perlinXOffset");
@@ -45,6 +54,12 @@ public class CustomTerrainEditor : Editor
 
         this.perlinParameterTable = new GUITableState("perlinParameterTable");
         this.perlinParameters = serializedObject.FindProperty("perlinParameters");
+        //  Voronoi Properties  -----------------
+        this.voronoiCount = serializedObject.FindProperty("voronoiCount");
+        this.voronoiFallOff = serializedObject.FindProperty("voronoiFallOff");
+        this.voronoiDropOff = serializedObject.FindProperty("voronoiDropOff");
+        this.voronoiMinHeight = serializedObject.FindProperty("voronoiMinHeight");
+        this.voronoiMaxHeight = serializedObject.FindProperty("voronoiMaxHeight");
     }
 
     public override void OnInspectorGUI()
@@ -130,6 +145,12 @@ public class CustomTerrainEditor : Editor
         this.showVoronoi = EditorGUILayout.Foldout(this.showVoronoi, "Voronoi");
         if (this.showVoronoi)
         {
+            EditorGUILayout.IntSlider(this.voronoiCount, 1, 10, new GUIContent("Peak Count"));
+            EditorGUILayout.Slider(this.voronoiFallOff, 0, 10, new GUIContent("Falloff"));
+            EditorGUILayout.Slider(this.voronoiDropOff, 0, 10, new GUIContent("Dropoff"));
+            EditorGUILayout.Slider(this.voronoiMinHeight, 0, 1, new GUIContent("Min Height"));
+            EditorGUILayout.Slider(this.voronoiMaxHeight, 0, 1, new GUIContent("Max Height"));
+
             if (GUILayout.Button("Voronoi"))
             {
                 terrain.Voronoi();

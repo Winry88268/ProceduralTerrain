@@ -251,30 +251,43 @@ MonoBehaviour:
   heightMapScale: {x: 1, y: 1, z: 1}
   randomHeightRange: {x: 0, y: 0.1}
   resetTerrain: 0
-  perlinXScale: 0.002
-  perlinYScale: 0.002
-  perlinXOffset: 0
-  perlinYOffset: 0
-  perlinOctaves: 3
-  perlinPersistance: 8
-  perlinHeightScale: 0.09
+  perlinXScale: 0.018
+  perlinYScale: 0.018
+  perlinXOffset: 6637
+  perlinYOffset: 4956
+  perlinOctaves: 1
+  perlinPersistance: 2.64
+  perlinHeightScale: 0.151
   perlinParameters:
-  - mPerlinXScale: 0.01
-    mPerlinYScale: 0.01
+  - mPerlinXScale: 0.001
+    mPerlinYScale: 0.001
     mPerlinXOffset: 0
     mPerlinYOffset: 0
     mPerlinOctaves: 3
     mPerlinPersistance: 8
     mPerlinHeightScale: 0.09
     remove: 0
-  - mPerlinXScale: 0.01
-    mPerlinYScale: 0.01
+  - mPerlinXScale: 0.002
+    mPerlinYScale: 0.002
     mPerlinXOffset: 0
     mPerlinYOffset: 0
     mPerlinOctaves: 3
     mPerlinPersistance: 8
     mPerlinHeightScale: 0.09
     remove: 0
+  - mPerlinXScale: 0.003
+    mPerlinYScale: 0.003
+    mPerlinXOffset: 0
+    mPerlinYOffset: 0
+    mPerlinOctaves: 3
+    mPerlinPersistance: 8
+    mPerlinHeightScale: 0.09
+    remove: 0
+  voronoiCount: 2
+  voronoiFallOff: 2.39
+  voronoiDropOff: 2.21
+  voronoiMinHeight: 0.752
+  voronoiMaxHeight: 0.412
   terrain: {fileID: 474024847}
   terrainData: {fileID: 15600000, guid: a524f5c984800124e80bddebe28079ba, type: 2}
   heightMapResolution: 513
