@@ -8,10 +8,17 @@ using System.Linq;
 public class CustomTerrain : MonoBehaviour
 {
     public Texture2D heightMapImage;
-    public Vector2 randomHeightRange = new Vector2(0,0.1f);
     public Vector3 heightMapScale = new Vector3(1, 1, 1);
+    public Vector2 randomHeightRange = new Vector2(0,0.1f);    
+    
+    //Perlin Noise ------------------------------------------
+    public float perlinXScale = 0.01f;
+    public float perlinYScale = 0.01f;
+    
     public Terrain terrain;
     public TerrainData terrainData;
+
+
  
     private void Awake() 
     {
@@ -84,6 +91,21 @@ public class CustomTerrain : MonoBehaviour
             }
         }
         this.terrainData.SetHeights(0, 0, heightMap);
+    }
+
+    public void Perlin()
+    {
+        int heightMapResolution = this.terrainData.heightmapResolution;
+
+        float[,] heightMap = this.terrainData.GetHeights(0, 0, heightMapResolution, heightMapResolution);
+    
+        for (int y = 0; y < heightMapResolution; y++)
+        {
+            for (int x = 0; x < heightMapResolution; x++)
+            {
+                heightMap[x, y] = Mathf.PerlinNoise(x * this.perlinXScale, y * this.perlinYScale);
+            }
+        }
     }
 
     public void ResetTerrain()

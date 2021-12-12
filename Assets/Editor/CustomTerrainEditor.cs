@@ -10,16 +10,21 @@ public class CustomTerrainEditor : Editor
     SerializedProperty randomHeightRange;
     SerializedProperty heightMapScale;
     SerializedProperty heightMapImage;
+    SerializedProperty perlinXScale;
+    SerializedProperty perlinYScale;
 
     //GUI Fold Outs ------------
     bool showRandom = false;
     bool showLoadHeights = false;
+    bool showPerlin = false;
 
     private void OnEnable() 
     {
         this.randomHeightRange = serializedObject.FindProperty("randomHeightRange");
         this.heightMapScale = serializedObject.FindProperty("heightMapScale");
         this.heightMapImage = serializedObject.FindProperty("heightMapImage");
+        this.perlinXScale = serializedObject.FindProperty("perlinXScale");
+        this.perlinYScale = serializedObject.FindProperty("perlinYScale");
     }
 
     public override void OnInspectorGUI()
@@ -52,6 +57,20 @@ public class CustomTerrainEditor : Editor
             if (GUILayout.Button("Load Texture"))
             {
                 terrain.LoadTexture();
+            }
+        }
+
+        this.showPerlin = EditorGUILayout.Foldout(this.showPerlin, "Single Perlin Noise");
+        if (this.showPerlin)
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            GUILayout.Label("Perlin Noise", EditorStyles.boldLabel);
+            EditorGUILayout.Slider(this.perlinXScale, 0, 1, new GUIContent("X Scale"));
+            EditorGUILayout.Slider(this.perlinYScale, 0, 1, new GUIContent("Y Scale"));
+            
+            if (GUILayout.Button("Perlin"))
+            {
+                terrain.Perlin();
             }
         }
 
