@@ -47,6 +47,9 @@ public class CustomTerrain : MonoBehaviour
     public float voronoiDropOff = 0.6f;
     public float voronoiMinHeight = 0.1f;
     public float voronoiMaxHeight = 1.0f;
+    
+    public enum VoronoiType { TestCase = 0, Linear = 1, Power = 2, Combined = 3, SinPow = 4 }
+    public VoronoiType voronoiType = VoronoiType.Linear;
 
     public Terrain terrain;
     public TerrainData terrainData;
@@ -218,9 +221,9 @@ public class CustomTerrain : MonoBehaviour
                     if (!(x == peak.x && y == peak.z))
                     {
                         float distanceToPeak = Vector2.Distance(peakLocation, new Vector2(x,y)) / maxDistance;
-                        float h = peak.y - distanceToPeak * this.voronoiFallOff - Mathf.Pow(distanceToPeak, this.voronoiDropOff);
-                        
-                        if (heightMap[x,y] < h)
+                        float h = DefineVoronoiType(peak, distanceToPeak);
+
+                        if (heightMap[ x, y ] < h)
                         {
                             heightMap[ x, y ] = h;
                         }
@@ -229,6 +232,27 @@ public class CustomTerrain : MonoBehaviour
             }
         }
         this.terrainData.SetHeights(0, 0, heightMap);
+    }
+
+    private float DefineVoronoiType(Vector3 peak, float distanceToPeak)
+    {
+        switch (this.voronoiType)
+        {
+            case VoronoiType.SinPow:
+                return peak.y - Mathf.Pow(distanceToPeak * 3, this.voronoiFallOff) - Mathf.Sin(distanceToPeak * 2 * Mathf.PI) / this.voronoiDropOff;
+
+            case VoronoiType.Combined:
+                return peak.y - distanceToPeak * this.voronoiFallOff - Mathf.Pow(distanceToPeak, this.voronoiDropOff);
+
+            case VoronoiType.Power:
+                return peak.y - Mathf.Pow(distanceToPeak, this.voronoiDropOff) * this.voronoiFallOff;
+
+            case VoronoiType.Linear:
+                return peak.y - distanceToPeak * this.voronoiFallOff;
+
+            default:
+                return peak.y - distanceToPeak;
+        }
     }
 
     public void ResetTerrain()
