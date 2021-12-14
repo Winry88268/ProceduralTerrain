@@ -11,6 +11,7 @@ public class CustomTerrainEditor : Editor
     SerializedProperty randomHeightRange;
     SerializedProperty heightMapScale;
     SerializedProperty heightMapImage;
+
     //  Perlin Properties  ----------------------
     SerializedProperty perlinXScale;
     SerializedProperty perlinYScale;
@@ -22,6 +23,7 @@ public class CustomTerrainEditor : Editor
 
     GUITableState perlinParameterTable;
     SerializedProperty perlinParameters;
+
     //  Voronoi Properties  ---------------------
     SerializedProperty voronoiCount;
     SerializedProperty voronoiFallOff;
@@ -30,12 +32,16 @@ public class CustomTerrainEditor : Editor
     SerializedProperty voronoiMaxHeight;
     SerializedProperty voronoiType;
 
+    //  Mid-Point Displacement Properties  ------
+    SerializedProperty mpdRandomScale;
+
     //  GUI Fold Outs  --------------------------
     bool showRandom = false;
     bool showLoadHeights = false;
     bool showPerlin = false;
     bool showMultiplePerlin = false;
     bool showVoronoi = false;
+    bool showMidPointDisplacement = false;
 
     private void OnEnable() 
     {
@@ -44,6 +50,7 @@ public class CustomTerrainEditor : Editor
         this.randomHeightRange = serializedObject.FindProperty("randomHeightRange");
         this.heightMapScale = serializedObject.FindProperty("heightMapScale");
         this.heightMapImage = serializedObject.FindProperty("heightMapImage");
+
         //  Perlin Properties  ------------------
         this.perlinXScale = serializedObject.FindProperty("perlinXScale");
         this.perlinYScale = serializedObject.FindProperty("perlinYScale");
@@ -55,6 +62,7 @@ public class CustomTerrainEditor : Editor
 
         this.perlinParameterTable = new GUITableState("perlinParameterTable");
         this.perlinParameters = serializedObject.FindProperty("perlinParameters");
+
         //  Voronoi Properties  -----------------
         this.voronoiCount = serializedObject.FindProperty("voronoiCount");
         this.voronoiFallOff = serializedObject.FindProperty("voronoiFallOff");
@@ -62,6 +70,9 @@ public class CustomTerrainEditor : Editor
         this.voronoiMinHeight = serializedObject.FindProperty("voronoiMinHeight");
         this.voronoiMaxHeight = serializedObject.FindProperty("voronoiMaxHeight");
         this.voronoiType = serializedObject.FindProperty("voronoiType");
+
+        //  Mid Point Displacement Properties  --
+        this.mpdRandomScale = serializedObject.FindProperty("mpdRandomScale");
     }
 
     public override void OnInspectorGUI()
@@ -147,6 +158,8 @@ public class CustomTerrainEditor : Editor
         this.showVoronoi = EditorGUILayout.Foldout(this.showVoronoi, "Voronoi");
         if (this.showVoronoi)
         {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            GUILayout.Label("Voronoi Tessellation", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(this.voronoiType);
             EditorGUILayout.IntSlider(this.voronoiCount, 1, 10, new GUIContent("Peak Count"));
             EditorGUILayout.Slider(this.voronoiFallOff, 0, 10, new GUIContent("Falloff"));
@@ -160,8 +173,21 @@ public class CustomTerrainEditor : Editor
             }
         }
 
+        this.showMidPointDisplacement = EditorGUILayout.Foldout(this.showMidPointDisplacement, "Midpoint Displacement");
+        if (this.showMidPointDisplacement)
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            GUILayout.Label("Midpoint Displacement", EditorStyles.boldLabel);
+            EditorGUILayout.Slider(this.mpdRandomScale, 0.01f, 0.1f, new GUIContent("Randomness Scale"));
+
+            if (GUILayout.Button("MPD"))
+            {
+                terrain.MidPointDisplacement();
+            }
+        }
+
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-        if (GUILayout.Button("Reset"))
+        if (GUILayout.Button("Full Terrain Reset"))
         {
             terrain.ResetTerrain();
         }
