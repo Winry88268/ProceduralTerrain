@@ -64,7 +64,7 @@ public class CustomTerrain : MonoBehaviour
     public TerrainData terrainData;
     public int heightMapResolution;
 
-    // Splat Maps  ------------------------------
+    // Splat Maps  ------------------------------    
     [System.Serializable]
     public class SplatHeights
     {
@@ -73,6 +73,10 @@ public class CustomTerrain : MonoBehaviour
         public float maxHeight = 0.2f;
         public Vector2 tileOffset = new Vector2(0, 0);
         public Vector2 tileSize = new Vector2(50, 50);
+        public float splatOffset = 0.1f;
+        public float splatNoiseXScale = 0.01f;
+        public float splatNoiseYScale = 0.01f;
+        public float splatNoiseScaler = 0.1f;
         public bool remove = false;
     }
 
@@ -460,8 +464,12 @@ public class CustomTerrain : MonoBehaviour
 
                 for (int i = 0; i < this.splatHeights.Count; i++)
                 {
-                    float thisHeightStart = this.splatHeights[i].minHeight;
-                    float thisHeightStop = this.splatHeights[i].maxHeight;
+                    float noise = Mathf.PerlinNoise(x * this.splatHeights[i].splatNoiseXScale, 
+                                                    y * this.splatHeights[i].splatNoiseYScale) 
+                                                      * this.splatHeights[i].splatNoiseScaler;
+                    float offset = this.splatHeights[i].splatOffset + noise;
+                    float thisHeightStart = this.splatHeights[i].minHeight - offset;
+                    float thisHeightStop = this.splatHeights[i].maxHeight + offset;
 
                     if ((heightMap[ x, y ] >= thisHeightStart && heightMap[ x, y ] <= thisHeightStop))
                     {
