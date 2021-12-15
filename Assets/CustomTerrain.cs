@@ -64,6 +64,23 @@ public class CustomTerrain : MonoBehaviour
     public TerrainData terrainData;
     public int heightMapResolution;
 
+    // Splat Maps  ------------------------------
+    [System.Serializable]
+    public class SplatHeights
+    {
+        public Texture2D texture = null;
+        public float minHeight = 0.1f;
+        public float maxHeight = 0.2f;
+        public Vector2 tileOffset = new Vector2(0, 0);
+        public Vector2 tileSize = new Vector2(50, 50);
+        public bool remove = false;
+    }
+
+    public List<SplatHeights> splatHeights = new List<SplatHeights>()
+    {
+        new SplatHeights()  //  Initialize Index 0  --  Table cannot be Empty
+    };
+
     private void Awake() 
     {
         SerializedObject tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
@@ -357,8 +374,11 @@ public class CustomTerrain : MonoBehaviour
 
     public void Smooth()
     {
-        float[,] originalHeightMap = GetHeightMap();
+        float[,] originalHeightMap = this.terrainData.GetHeights(0, 0, this.heightMapResolution, this.heightMapResolution);
         float[,] smoothHeightMap = originalHeightMap;
+        float smoothProgress = 0;
+
+        EditorUtility.DisplayProgressBar("Smoothing Terrain", "Progress", smoothProgress);
 
         for (int i = 0; i < this.smoothReps; i++)
         {
@@ -378,8 +398,12 @@ public class CustomTerrain : MonoBehaviour
                 }
             }
             originalHeightMap = smoothHeightMap;
+            smoothProgress++;
+
+            EditorUtility.DisplayProgressBar("Smoothing Terrain", "Progress", smoothProgress / this.smoothReps);
         }
         this.terrainData.SetHeights(0, 0, smoothHeightMap);
+        EditorUtility.ClearProgressBar();
     }
 
     List<Vector2> GenerateNeighbours(Vector2 pos, int width, int height)
@@ -399,7 +423,60 @@ public class CustomTerrain : MonoBehaviour
                 }
             }
         }
+
         return neighbours;
+    }
+
+    public void SplatMaps()
+    {
+        TerrainLayer[] newSplatPrototypes;
+        newSplatPrototypes = new TerrainLayer[this.splatHeights.Count];
+        int spindex = 0;
+
+        foreach (SplatHeights sh in this.splatHeights)
+        {
+            newSplatPrototypes[spindex] = new TerrainLayer();
+            newSplatPrototypes[spindex].diffuseTexture = sh.texture;
+            newSplatPrototypes[spindex].tileOffset = sh.tileOffset;
+            newSplatPrototypes[spindex].tileSize = sh.tileSize;
+            newSplatPrototypes[spindex].diffuseTexture.Apply(true);
+
+            // string path = "Assets.New Terrain Layer " + spindex + ".terrainlayer";
+            // AssetDatabase.CreateAsset(newSplatPrototypes[spindex], path);
+            spindex++;
+            // Selection.activeObject = this.gameObject;
+        }
+
+        this.terrainData.terrainLayers = newSplatPrototypes;
+
+        // float[,] heightMap = GetHeightMap();
+
+        // float[,,] splatmapData = new float[this.terrainData.alphamapWidth, this.terrainData.alphamapHeight, this.terrainData.alphamapLayers]; 
+    }
+
+    public void AddSplatHeight()
+    {
+        this.splatHeights.Add(new SplatHeights());
+    }
+
+    public void RemoveSplatHeight()
+    {
+        List<SplatHeights> keptSplatHeights = new List<SplatHeights>();
+
+        for (int i = 0; i < this.splatHeights.Count; i++)
+        {
+            if(!this.splatHeights[i].remove)
+            {
+                keptSplatHeights.Add(this.splatHeights[i]);
+            }
+        }
+
+        if (keptSplatHeights.Count == 0)  //  0 Elements retained
+        {
+            keptSplatHeights.Add(this.splatHeights[0]);  //  Always Retain Index 0  --  Table cannot be Empty
+        }
+
+        this.splatHeights = keptSplatHeights;
     }
 
     public void ResetTerrain()

@@ -41,6 +41,10 @@ public class CustomTerrainEditor : Editor
     //  Smoothing  ------------------------------
     SerializedProperty smoothReps;
 
+    //  Splat Maps  -----------------------------
+    GUITableState splatMapTable;
+    SerializedProperty splatHeights;
+
     //  GUI Fold Outs  --------------------------
     bool showRandom = false;
     bool showLoadHeights = false;
@@ -49,6 +53,7 @@ public class CustomTerrainEditor : Editor
     bool showVoronoi = false;
     bool showMidPointDisplacement = false;
     bool showSmooth = false;
+    bool showSplatMap = false;
 
     private void OnEnable() 
     {
@@ -86,6 +91,10 @@ public class CustomTerrainEditor : Editor
 
         //  Smoothing  --------------------------
         this.smoothReps = serializedObject.FindProperty("smoothReps");
+
+        //  Splat Maps  -------------------------
+        this.splatMapTable = new GUITableState("splatMapTable");
+        this.splatHeights = serializedObject.FindProperty("splatHeights");
     }
 
     public override void OnInspectorGUI()
@@ -208,11 +217,38 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        this.showSplatMap = EditorGUILayout.Foldout(this.showSplatMap, "Splat Maps");
+        if (this.showSplatMap)
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            this.splatMapTable = GUITableLayout.DrawTable(this.splatMapTable, this.splatHeights);
+            
+            GUILayout.Space(20);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("+"))
+            {
+                terrain.AddSplatHeight();
+            }
+
+            if (GUILayout.Button("-"))
+            {
+                terrain.RemoveSplatHeight();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Apply Splat Maps"))
+            {
+                terrain.SplatMaps();
+            }
+
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        }
+
         this.showSmooth = EditorGUILayout.Foldout(this.showSmooth, "Smoothing");
         if (this.showSmooth)
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-            EditorGUILayout.IntSlider(this.smoothReps, 1, 10, new GUIContent("Smoothing Iterations"));
+            EditorGUILayout.IntSlider(this.smoothReps, 1, 100, new GUIContent("Smoothing Iterations"));
 
             if (GUILayout.Button("Smooth"))
             {
