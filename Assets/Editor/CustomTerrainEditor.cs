@@ -33,7 +33,13 @@ public class CustomTerrainEditor : Editor
     SerializedProperty voronoiType;
 
     //  Mid-Point Displacement Properties  ------
-    SerializedProperty mpdRandomScale;
+    SerializedProperty mpdHeightMin;
+    SerializedProperty mpdHeightMax;
+    SerializedProperty mpdDampener;
+    SerializedProperty mpdRoughness;
+
+    //  Smoothing  ------------------------------
+    SerializedProperty smoothReps;
 
     //  GUI Fold Outs  --------------------------
     bool showRandom = false;
@@ -42,6 +48,7 @@ public class CustomTerrainEditor : Editor
     bool showMultiplePerlin = false;
     bool showVoronoi = false;
     bool showMidPointDisplacement = false;
+    bool showSmooth = false;
 
     private void OnEnable() 
     {
@@ -72,7 +79,13 @@ public class CustomTerrainEditor : Editor
         this.voronoiType = serializedObject.FindProperty("voronoiType");
 
         //  Mid Point Displacement Properties  --
-        this.mpdRandomScale = serializedObject.FindProperty("mpdRandomScale");
+        this.mpdHeightMin = serializedObject.FindProperty("mpdHeightMin");
+        this.mpdHeightMax = serializedObject.FindProperty("mpdHeightMax");
+        this.mpdDampener = serializedObject.FindProperty("mpdDampener");
+        this.mpdRoughness = serializedObject.FindProperty("mpdRoughness");
+
+        //  Smoothing  --------------------------
+        this.smoothReps = serializedObject.FindProperty("smoothReps");
     }
 
     public override void OnInspectorGUI()
@@ -87,20 +100,20 @@ public class CustomTerrainEditor : Editor
         if (this.showRandom)
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-            GUILayout.Label("Set Heights between Values", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(this.randomHeightRange);
 
             if (GUILayout.Button("Random Heights"))
             {
                 terrain.RandomTerrain();
             }
+
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
         this.showLoadHeights = EditorGUILayout.Foldout(this.showLoadHeights, "Load");
         if (this.showLoadHeights)
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-            GUILayout.Label("Load Heights from Texture", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(this.heightMapImage);
             EditorGUILayout.PropertyField(this.heightMapScale);
             
@@ -108,13 +121,14 @@ public class CustomTerrainEditor : Editor
             {
                 terrain.LoadTexture();
             }
+
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
         this.showPerlin = EditorGUILayout.Foldout(this.showPerlin, "Single Perlin Noise");
         if (this.showPerlin)
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-            GUILayout.Label("Single Perlin Noise", EditorStyles.boldLabel);
             EditorGUILayout.Slider(this.perlinXScale, 0, 1, new GUIContent("X Scale"));
             EditorGUILayout.Slider(this.perlinYScale, 0, 1, new GUIContent("Y Scale"));
             EditorGUILayout.IntSlider(this.perlinXOffset, 0, 10000, new GUIContent("X Offset"));
@@ -127,13 +141,14 @@ public class CustomTerrainEditor : Editor
             {
                 terrain.Perlin();
             }
+
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
         this.showMultiplePerlin = EditorGUILayout.Foldout(this.showMultiplePerlin, "Multiple Perlin Noise");
         if (this.showMultiplePerlin)
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-            GUILayout.Label("Multiple Perlin Noise", EditorStyles.boldLabel);
             this.perlinParameterTable = GUITableLayout.DrawTable(this.perlinParameterTable, this.perlinParameters);
             
             GUILayout.Space(20);
@@ -153,13 +168,14 @@ public class CustomTerrainEditor : Editor
             {
                 terrain.MultiplePerlinTerrain();
             }
+
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
         this.showVoronoi = EditorGUILayout.Foldout(this.showVoronoi, "Voronoi");
         if (this.showVoronoi)
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-            GUILayout.Label("Voronoi Tessellation", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(this.voronoiType);
             EditorGUILayout.IntSlider(this.voronoiCount, 1, 10, new GUIContent("Peak Count"));
             EditorGUILayout.Slider(this.voronoiFallOff, 0, 10, new GUIContent("Falloff"));
@@ -171,18 +187,36 @@ public class CustomTerrainEditor : Editor
             {
                 terrain.Voronoi();
             }
+
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
         this.showMidPointDisplacement = EditorGUILayout.Foldout(this.showMidPointDisplacement, "Midpoint Displacement");
         if (this.showMidPointDisplacement)
         {
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-            GUILayout.Label("Midpoint Displacement", EditorStyles.boldLabel);
-            EditorGUILayout.Slider(this.mpdRandomScale, 0.01f, 0.1f, new GUIContent("Randomness Scale"));
+            EditorGUILayout.Slider(this.mpdHeightMin, -10f, -0.1f, new GUIContent("MPD Min Height"));
+            EditorGUILayout.Slider(this.mpdHeightMax, 0.1f, 10f, new GUIContent("MPD Max Height"));
+            EditorGUILayout.Slider(this.mpdDampener, 2f, 10f, new GUIContent("MPD Height Dampening"));
+            EditorGUILayout.Slider(this.mpdRoughness, 1f, 10f, new GUIContent("MPD Roughness"));
 
             if (GUILayout.Button("MPD"))
             {
                 terrain.MidPointDisplacement();
+            }
+
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        }
+
+        this.showSmooth = EditorGUILayout.Foldout(this.showSmooth, "Smoothing");
+        if (this.showSmooth)
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            EditorGUILayout.IntSlider(this.smoothReps, 1, 10, new GUIContent("Smoothing Iterations"));
+
+            if (GUILayout.Button("Smooth"))
+            {
+                terrain.Smooth();
             }
         }
 

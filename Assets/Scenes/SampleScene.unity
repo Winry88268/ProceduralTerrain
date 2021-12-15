@@ -283,11 +283,16 @@ MonoBehaviour:
     mPerlinPersistance: 8
     mPerlinHeightScale: 0.09
     remove: 0
-  voronoiCount: 2
-  voronoiFallOff: 2.39
-  voronoiDropOff: 2.21
-  voronoiMinHeight: 0.752
-  voronoiMaxHeight: 0.412
+  voronoiCount: 1
+  voronoiFallOff: 1.46
+  voronoiDropOff: 0.43
+  voronoiMinHeight: 0.01
+  voronoiMaxHeight: 0.063
+  voronoiType: 1
+  mpdHeightMin: -5
+  mpdHeightMax: 5
+  mpdDampener: 2
+  mpdRoughness: 2
   terrain: {fileID: 474024847}
   terrainData: {fileID: 15600000, guid: a524f5c984800124e80bddebe28079ba, type: 2}
   heightMapResolution: 513

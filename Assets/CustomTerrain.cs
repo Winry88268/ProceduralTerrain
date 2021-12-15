@@ -52,7 +52,13 @@ public class CustomTerrain : MonoBehaviour
     public VoronoiType voronoiType = VoronoiType.Linear;
 
     //  Mid Point Displacement  -----------------
-    public float mpdRandomScale = 0.01f;
+    public float mpdHeightMin = -2.0f;
+    public float mpdHeightMax = 2.0f;
+    public float mpdDampener = 2.0f;
+    public float mpdRoughness = 2.0f;
+
+    //  Smoothing  ------------------------------
+    public int smoothReps = 1;
 
     public Terrain terrain;
     public TerrainData terrainData;
@@ -263,25 +269,19 @@ public class CustomTerrain : MonoBehaviour
         float[,] heightMap = GetHeightMap();
 
         int width = this.heightMapResolution - 1;
-        int height = this.heightMapResolution - 1;
-        int squareSize = this.heightMapResolution - 1;
+        int squareSize = width;
 
-        float randomness = (float) squareSize / 2.0f * this.mpdRandomScale;
-        float roughness = 2.0f;
-        float dampening = (float) Mathf.Pow(2, -1 * roughness);
+        float heightMin = this.mpdHeightMin;
+        float heightMax = this.mpdHeightMax;
+        float heightDampen = (float) Mathf.Pow(this.mpdDampener, -1 * this.mpdRoughness);
 
         int cornerX, cornerY;
         int midX, midY;
         int pmidXL, pmidXR, pmidYU, pmidYD;
 
-        heightMap[ 0, 0 ] = UnityEngine.Random.Range(0f, 0.2f);
-        heightMap[ 0, height - 1 ] = UnityEngine.Random.Range(0f, 0.2f);
-        heightMap[ width - 1, 0 ] = UnityEngine.Random.Range(0f, 0.2f);
-        heightMap[ width - 1, height - 1] = UnityEngine.Random.Range(0f, 0.2f);
-
         while (squareSize > 0)
         {
-
+            //  Diamond Step  -------------------
             for (int x = 0; x < width; x += squareSize)
             {
                 for (int y = 0; y < width; y += squareSize)
@@ -292,17 +292,114 @@ public class CustomTerrain : MonoBehaviour
                     midX = (int) (x + squareSize / 2.0f);
                     midY = (int) (y + squareSize / 2.0f);
 
-                    heightMap[ midX, midY ] = (float) ((heightMap[ x, y ] +
-                                                        heightMap[ cornerX, y] +
-                                                        heightMap[ x, cornerY] +
+                    heightMap[ midX, midY ] = (float) ((heightMap[ x, y ] + 
+                                                        heightMap[ cornerX, y ] +
+                                                        heightMap[ x, cornerY ] +
                                                         heightMap[ cornerX, cornerY ]) / 
-                                                        4.0f + UnityEngine.Random.Range(-randomness, randomness));
+                                                        4.0f + UnityEngine.Random.Range(heightMin, heightMax));
+                }
+            }
+
+            //  Square Step  --------------------
+            for (int x = 0; x < width; x += squareSize)
+            {
+                for (int y = 0; y < width; y += squareSize)
+                {
+                    cornerX = (x + squareSize);
+                    cornerY = (y + squareSize);
+
+                    midX = (int) (x + squareSize / 2.0f);
+                    midY = (int) (y + squareSize / 2.0f);
+
+                    pmidXR = (int) (midX + squareSize);
+                    pmidYU = (int) (midY + squareSize);
+                    pmidXL = (int) (midX - squareSize);
+                    pmidYD = (int) (midY - squareSize);
+
+                    if (pmidXL <= 0 || pmidYD <= 0 || pmidXR >= width -1 || pmidYU >= width -1) 
+                        continue;
+
+                    //  Bottom Side  ------------
+                    heightMap[ midX, y ] = (float) ((heightMap[ midX, midY ] +
+                                                     heightMap[ x, y ] +
+                                                     heightMap[ midX, pmidYD ] + 
+                                                     heightMap[ cornerX, y ]) / 
+                                                     4.0f + UnityEngine.Random.Range(heightMin, heightMax));
+
+                    //  Left Side  --------------
+                    heightMap[ x, midY ] = (float) ((heightMap[ midX, midY ] +
+                                                     heightMap[ x, y ] +
+                                                     heightMap[ pmidXL, midY ] + 
+                                                     heightMap[ x, cornerY ]) / 
+                                                     4.0f + UnityEngine.Random.Range(heightMin, heightMax));
+
+                    //  Top Side  ---------------
+                    heightMap[ midX, cornerY ] = (float) ((heightMap[ midX, midY ] +
+                                                           heightMap[ x, cornerY ] +
+                                                           heightMap[ midX, pmidYU ] + 
+                                                           heightMap[ cornerX, cornerY ]) / 
+                                                           4.0f + UnityEngine.Random.Range(heightMin, heightMax));
+
+                    //  Right Side  -------------
+                    heightMap[ cornerX, midY ] = (float) ((heightMap[ midX, midY ] +
+                                                           heightMap[ cornerX, cornerY ] +
+                                                           heightMap[ pmidXR, midY ] + 
+                                                           heightMap[ cornerX, y ]) / 
+                                                           4.0f + UnityEngine.Random.Range(heightMin, heightMax));
                 }
             }
             squareSize = (int) (squareSize / 2.0f);
-            randomness *= dampening;
+            heightMin *= heightDampen;
+            heightMax *= heightDampen;
         }
         this.terrainData.SetHeights(0, 0, heightMap);
+    }
+
+    public void Smooth()
+    {
+        float[,] originalHeightMap = GetHeightMap();
+        float[,] smoothHeightMap = originalHeightMap;
+
+        for (int i = 0; i < this.smoothReps; i++)
+        {
+            for (int y = 0; y < this.heightMapResolution; y++)
+            {
+                for (int x = 0; x < this.heightMapResolution; x++)
+                {
+                    float avgHeight = originalHeightMap[ x, y ];
+                    
+                    List<Vector2> neighbours = GenerateNeighbours(new Vector2(x, y), this.heightMapResolution, this.heightMapResolution);
+
+                    foreach (Vector2 n in neighbours)
+                    {
+                        avgHeight += originalHeightMap[(int) n.x, (int) n.y ];
+                    }
+                    smoothHeightMap[ x, y ] = avgHeight / ((float) neighbours.Count + 1);
+                }
+            }
+            originalHeightMap = smoothHeightMap;
+        }
+        this.terrainData.SetHeights(0, 0, smoothHeightMap);
+    }
+
+    List<Vector2> GenerateNeighbours(Vector2 pos, int width, int height)
+    {
+        List<Vector2> neighbours = new List<Vector2>();
+
+        for (int y = -1; y < 2; y++)
+        {
+            for (int x = -1; x < 2; x++)
+            {
+                if(!(x == 0 && y == 0))
+                {
+                    Vector2 nPos = new Vector2(Mathf.Clamp(pos.x + x, 0, width - 1), Mathf.Clamp(pos.y + y, 0, height - 1));
+
+                    if (!neighbours.Contains(nPos))
+                         neighbours.Add(nPos);
+                }
+            }
+        }
+        return neighbours;
     }
 
     public void ResetTerrain()
