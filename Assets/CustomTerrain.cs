@@ -71,6 +71,8 @@ public class CustomTerrain : MonoBehaviour
         public Texture2D texture = null;
         public float minHeight = 0.1f;
         public float maxHeight = 0.2f;
+        public float minSlope = 0f;
+        public float maxSlope = 1.5f;
         public Vector2 tileOffset = new Vector2(0, 0);
         public Vector2 tileSize = new Vector2(50, 50);
         public float splatOffset = 0.1f;
@@ -470,8 +472,12 @@ public class CustomTerrain : MonoBehaviour
                     float offset = this.splatHeights[i].splatOffset + noise;
                     float thisHeightStart = this.splatHeights[i].minHeight - offset;
                     float thisHeightStop = this.splatHeights[i].maxHeight + offset;
+                    //  Flip (X,Y) for Steepness Method to prevent Steep Slope placement bug
+                    float steepness = this.terrainData.GetSteepness(y / (float) this.terrainData.alphamapHeight,
+                                                                    x / (float) this.terrainData.alphamapWidth);
 
-                    if ((heightMap[ x, y ] >= thisHeightStart && heightMap[ x, y ] <= thisHeightStop))
+                    if ((heightMap[ x, y ] >= thisHeightStart && heightMap[ x, y ] <= thisHeightStop) &&
+                        (steepness >= this.splatHeights[i].minSlope && steepness <= this.splatHeights[i].maxSlope))
                     {
                         splat[i] = 1;
                     }
