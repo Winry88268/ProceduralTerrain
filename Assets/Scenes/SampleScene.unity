@@ -247,10 +247,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61a6c9ce38404574e970e68311758ff6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  heightMapImage: {fileID: 0}
-  heightMapScale: {x: 1, y: 1, z: 1}
+  heightMapImage: {fileID: 2800000, guid: 16d002755199d2a45bd5c5a62c6e3c28, type: 3}
+  heightMapScale: {x: 1, y: 0.5, z: 1}
   randomHeightRange: {x: 0, y: 0.1}
-  resetTerrain: 0
+  resetTerrain: 1
   perlinXScale: 0.018
   perlinYScale: 0.018
   perlinXOffset: 6637
@@ -300,7 +300,7 @@ MonoBehaviour:
   splatHeights:
   - texture: {fileID: 2800000, guid: dd49ed99f55924d13bacefd240626bc5, type: 3}
     minHeight: 0
-    maxHeight: 0.4
+    maxHeight: 0.6
     minSlope: 0
     maxSlope: 30
     tileOffset: {x: 0, y: 0}
@@ -308,7 +308,7 @@ MonoBehaviour:
     splatOffset: 0.01
     splatNoiseXScale: 0.007
     splatNoiseYScale: 0.002
-    splatNoiseScaler: 0.01
+    splatNoiseScaler: 0.1
     remove: 0
   - texture: {fileID: 2800000, guid: 18d06890de62d443ea645cc5adec617e, type: 3}
     minHeight: 0
@@ -320,12 +320,12 @@ MonoBehaviour:
     splatOffset: 0.01
     splatNoiseXScale: 0.01
     splatNoiseYScale: 0.003
-    splatNoiseScaler: 0.06
+    splatNoiseScaler: 0.05
     remove: 0
   - texture: {fileID: 2800000, guid: 79d5431cd68194d08a40d2bbe4ebcef9, type: 3}
     minHeight: 0
-    maxHeight: 0.35
-    minSlope: 25
+    maxHeight: 0.6
+    minSlope: 30
     maxSlope: 90
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 50, y: 50}
@@ -335,16 +335,16 @@ MonoBehaviour:
     splatNoiseScaler: 0.2
     remove: 0
   - texture: {fileID: 2800000, guid: de70d1ae446e84ee5aa2ea6a420781e8, type: 3}
-    minHeight: 0.35
+    minHeight: 0.4
     maxHeight: 1
     minSlope: 0
-    maxSlope: 80
+    maxSlope: 90
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 50, y: 50}
     splatOffset: 0.01
-    splatNoiseXScale: 0.001
-    splatNoiseYScale: 0.003
-    splatNoiseScaler: 0.05
+    splatNoiseXScale: 0.1
+    splatNoiseYScale: 0.2
+    splatNoiseScaler: 0.15
     remove: 0
 --- !u!154 &474024846
 TerrainCollider:

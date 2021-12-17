@@ -13,6 +13,9 @@ public class TextureCreatorWindow : EditorWindow
     float perlinPersistance;
     float perlinHeightScale;
 
+    float brightness = 0.5f;
+    float contrast = 0.5f;
+
     int perlinOctaves;
     int perlinOffsetX;
     int perlinOffsetY;
@@ -46,12 +49,19 @@ public class TextureCreatorWindow : EditorWindow
         this.perlinHeightScale = EditorGUILayout.Slider("Height Scale", this.perlinHeightScale, 0f, 1f);
         this.perlinOffsetX = EditorGUILayout.IntSlider("X Offset", this.perlinOffsetX, 0, 10000);
         this.perlinOffsetY = EditorGUILayout.IntSlider("Y Offset", this.perlinOffsetY, 0, 10000);
+
+        this.brightness = EditorGUILayout.Slider("Brightness", this.brightness, 0f, 2f);
+        this.contrast = EditorGUILayout.Slider("Contrast", this.contrast, 0f, 2f);
+
         this.alphaToggle = EditorGUILayout.Toggle("Alpha?", this.alphaToggle);
         this.seamlessToggle = EditorGUILayout.Toggle("Seamless?", this.seamlessToggle);
         this.mapToggle = EditorGUILayout.Toggle("Map?", this.mapToggle);
 
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
+
+        float minColour = 1;
+        float maxColour = 0;
 
         if (GUILayout.Button("Generate", GUILayout.Width(wSize)))
         {
@@ -116,9 +126,29 @@ public class TextureCreatorWindow : EditorWindow
                                               * this.perlinHeightScale;
                     }                    
 
-                    float colValue = pValue;
+                    float colValue = this.contrast * (pValue - 0.5f) + 0.5f * this.brightness;
+                    if (minColour > colValue) minColour = colValue;
+                    if (maxColour < colValue) maxColour = colValue;
                     pixCol = new Color(colValue, colValue, colValue, alphaToggle ? colValue : 1);
                     this.pTexture.SetPixel(x, y, pixCol);
+                }
+            }
+
+            if (this.mapToggle)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    for (int x = 0; x < w; x++)
+                    {
+                        pixCol = this.pTexture.GetPixel(x, y);
+                        float colValue = pixCol.r;
+                        colValue = Utils.Map(colValue, minColour, maxColour, 0, 1);
+                        
+                        pixCol.r = colValue;
+                        pixCol.g = colValue;
+                        pixCol.b = colValue;
+                        this.pTexture.SetPixel(x, y, pixCol);
+                    }
                 }
             }
 
@@ -139,7 +169,9 @@ public class TextureCreatorWindow : EditorWindow
 
         if (GUILayout.Button("Save", GUILayout.Width(wSize)))
         {
-
+            byte[] bytes = this.pTexture.EncodeToPNG();
+            System.IO.Directory.CreateDirectory(Application.dataPath + "/SavedTextures");
+            File.WriteAllBytes(Application.dataPath + "/SavedTextures/" + this.filename + ".png", bytes);
         }
 
         GUILayout.FlexibleSpace();
