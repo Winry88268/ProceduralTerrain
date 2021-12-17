@@ -57,14 +57,7 @@ public class CustomTerrain : MonoBehaviour
     public float mpdDampener = 2.0f;
     public float mpdRoughness = 2.0f;
 
-    //  Smoothing  ------------------------------
-    public int smoothReps = 1;
-
-    public Terrain terrain;
-    public TerrainData terrainData;
-    public int heightMapResolution;
-
-    // Splat Maps  ------------------------------    
+   // Splat Maps  ------------------------------    
     [System.Serializable]
     public class SplatHeights
     {
@@ -86,6 +79,14 @@ public class CustomTerrain : MonoBehaviour
     {
         new SplatHeights()  //  Initialize Index 0  --  Table cannot be Empty
     };
+
+    //  Smoothing  ------------------------------
+    public int smoothReps = 1;
+
+    //  General Properties  ---------------------
+    public Terrain terrain;
+    public TerrainData terrainData;
+    public int heightMapResolution;
 
     private void Awake() 
     {

@@ -8,11 +8,13 @@ public class CustomTerrainEditor : Editor
 {
     //  GUI Properties  -------------------------
     SerializedProperty resetTerrain;
+
+    //  Random  ---------------------------------
     SerializedProperty randomHeightRange;
     SerializedProperty heightMapScale;
     SerializedProperty heightMapImage;
 
-    //  Perlin Properties  ----------------------
+    //  Perlin Noise ----------------------------
     SerializedProperty perlinXScale;
     SerializedProperty perlinYScale;
     SerializedProperty perlinXOffset;
@@ -24,7 +26,7 @@ public class CustomTerrainEditor : Editor
     GUITableState perlinParameterTable;
     SerializedProperty perlinParameters;
 
-    //  Voronoi Properties  ---------------------
+    //  Voronoi Tesselation  --------------------
     SerializedProperty voronoiCount;
     SerializedProperty voronoiFallOff;
     SerializedProperty voronoiDropOff;
@@ -32,38 +34,46 @@ public class CustomTerrainEditor : Editor
     SerializedProperty voronoiMaxHeight;
     SerializedProperty voronoiType;
 
-    //  Mid-Point Displacement Properties  ------
+    //  Mid-Point Displacement  -----------------
     SerializedProperty mpdHeightMin;
     SerializedProperty mpdHeightMax;
     SerializedProperty mpdDampener;
     SerializedProperty mpdRoughness;
-
+    
+    //  Splat Map  ------------------------------
+    GUITableState splatMapTable;
+    SerializedProperty splatHeights;
+    
     //  Smoothing  ------------------------------
     SerializedProperty smoothReps;
 
-    //  Splat Maps  -----------------------------
-    GUITableState splatMapTable;
-    SerializedProperty splatHeights;
+    //  Height Map  -----------------------------
+    Texture2D hmTexture;
 
-    //  GUI Fold Outs  --------------------------
+    //  GUI Foldouts  ---------------------------
     bool showRandom = false;
     bool showLoadHeights = false;
     bool showPerlin = false;
     bool showMultiplePerlin = false;
     bool showVoronoi = false;
     bool showMidPointDisplacement = false;
-    bool showSmooth = false;
     bool showSplatMap = false;
+    bool showSmooth = false;
+    bool showHeightMap = false;
+
+    CustomTerrain terrain;
 
     private void OnEnable() 
     {
         //  GUI Properties  ---------------------
         this.resetTerrain = serializedObject.FindProperty("resetTerrain");
+
+        //  Random  -----------------------------
         this.randomHeightRange = serializedObject.FindProperty("randomHeightRange");
         this.heightMapScale = serializedObject.FindProperty("heightMapScale");
         this.heightMapImage = serializedObject.FindProperty("heightMapImage");
 
-        //  Perlin Properties  ------------------
+        //  Perlin  -----------------------------
         this.perlinXScale = serializedObject.FindProperty("perlinXScale");
         this.perlinYScale = serializedObject.FindProperty("perlinYScale");
         this.perlinXOffset = serializedObject.FindProperty("perlinXOffset");
@@ -75,7 +85,7 @@ public class CustomTerrainEditor : Editor
         this.perlinParameterTable = new GUITableState("perlinParameterTable");
         this.perlinParameters = serializedObject.FindProperty("perlinParameters");
 
-        //  Voronoi Properties  -----------------
+        //  Voronoi Tesselation  ----------------
         this.voronoiCount = serializedObject.FindProperty("voronoiCount");
         this.voronoiFallOff = serializedObject.FindProperty("voronoiFallOff");
         this.voronoiDropOff = serializedObject.FindProperty("voronoiDropOff");
@@ -83,28 +93,34 @@ public class CustomTerrainEditor : Editor
         this.voronoiMaxHeight = serializedObject.FindProperty("voronoiMaxHeight");
         this.voronoiType = serializedObject.FindProperty("voronoiType");
 
-        //  Mid Point Displacement Properties  --
+        //  Mid Point Displacement  -------------
         this.mpdHeightMin = serializedObject.FindProperty("mpdHeightMin");
         this.mpdHeightMax = serializedObject.FindProperty("mpdHeightMax");
         this.mpdDampener = serializedObject.FindProperty("mpdDampener");
         this.mpdRoughness = serializedObject.FindProperty("mpdRoughness");
 
+        //  Splat Map  --------------------------
+        this.splatMapTable = new GUITableState("splatMapTable");
+        this.splatHeights = serializedObject.FindProperty("splatHeights");
+
         //  Smoothing  --------------------------
         this.smoothReps = serializedObject.FindProperty("smoothReps");
 
-        //  Splat Maps  -------------------------
-        this.splatMapTable = new GUITableState("splatMapTable");
-        this.splatHeights = serializedObject.FindProperty("splatHeights");
+        // Height Map  --------------------------
+        this.hmTexture = new Texture2D(this.terrain.terrainData.heightmapResolution, 
+                                       this.terrain.terrainData.heightmapResolution, 
+                                       TextureFormat.ARGB32, false);
     }
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
 
-        CustomTerrain terrain = (CustomTerrain) target;
+        this.terrain = (CustomTerrain) target;
 
         EditorGUILayout.PropertyField(this.resetTerrain);
         
+        //  Random  -----------------------------
         this.showRandom = EditorGUILayout.Foldout(this.showRandom, "Random");
         if (this.showRandom)
         {
@@ -119,6 +135,7 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        //  Load Heightmap  ---------------------
         this.showLoadHeights = EditorGUILayout.Foldout(this.showLoadHeights, "Load");
         if (this.showLoadHeights)
         {
@@ -134,6 +151,7 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        //  Single Perlin Noise  ----------------
         this.showPerlin = EditorGUILayout.Foldout(this.showPerlin, "Single Perlin Noise");
         if (this.showPerlin)
         {
@@ -154,6 +172,7 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        //  Multiple Perlin Noise  --------------
         this.showMultiplePerlin = EditorGUILayout.Foldout(this.showMultiplePerlin, "Multiple Perlin Noise");
         if (this.showMultiplePerlin)
         {
@@ -181,6 +200,7 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        //  Voronoi Tesselation  ----------------
         this.showVoronoi = EditorGUILayout.Foldout(this.showVoronoi, "Voronoi");
         if (this.showVoronoi)
         {
@@ -200,6 +220,7 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        //  Midpoint Displacement  --------------
         this.showMidPointDisplacement = EditorGUILayout.Foldout(this.showMidPointDisplacement, "Midpoint Displacement");
         if (this.showMidPointDisplacement)
         {
@@ -217,6 +238,7 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        //  Splat Map  --------------------------
         this.showSplatMap = EditorGUILayout.Foldout(this.showSplatMap, "Splat Maps");
         if (this.showSplatMap)
         {
@@ -244,6 +266,7 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        //  Smoothing  --------------------------
         this.showSmooth = EditorGUILayout.Foldout(this.showSmooth, "Smoothing");
         if (this.showSmooth)
         {
@@ -260,6 +283,42 @@ public class CustomTerrainEditor : Editor
         if (GUILayout.Button("Full Terrain Reset"))
         {
             terrain.ResetTerrain();
+        }
+
+        //  Height Map  -------------------------
+        this.showHeightMap = EditorGUILayout.Foldout(this.showHeightMap, "Height Map");
+        if (this.showHeightMap)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            int hmtSize = (int) (EditorGUIUtility.currentViewWidth - 100);
+            GUILayout.Label(this.hmTexture, GUILayout.Width(hmtSize), GUILayout.Height(hmtSize));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Refresh", GUILayout.Width(hmtSize)))
+            {
+                float[,] heightMap = this.terrain.terrainData.GetHeights(0, 0, this.terrain.terrainData.heightmapResolution, 
+                                                                               this.terrain.terrainData.heightmapResolution);
+
+                for (int y = 0; y < this.terrain.terrainData.alphamapHeight; y++)
+                {
+                    for (int x = 0; x < this.terrain.terrainData.alphamapWidth; x++)
+                    {
+                        this.hmTexture.SetPixel(x, y, new Color(heightMap[ x, y ],
+                                                                heightMap[ x, y ],
+                                                                heightMap[ x, y ], 1));
+                    }
+                }
+
+                this.hmTexture.Apply();
+            }
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
         }
 
         serializedObject.ApplyModifiedProperties();
