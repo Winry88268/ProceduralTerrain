@@ -43,6 +43,13 @@ public class CustomTerrainEditor : Editor
     //  Splat Map  ------------------------------
     GUITableState splatMapTable;
     SerializedProperty splatHeights;
+
+    //  Vegetation  -----------------------------
+    SerializedProperty maxVegetation;
+    SerializedProperty vegetationSpacing;
+
+    GUITableState vegetationTable;
+    SerializedProperty vegetationHeights;
     
     //  Smoothing  ------------------------------
     SerializedProperty smoothReps;
@@ -58,6 +65,7 @@ public class CustomTerrainEditor : Editor
     bool showVoronoi = false;
     bool showMidPointDisplacement = false;
     bool showSplatMap = false;
+    bool showVegetation = false;
     bool showSmooth = false;
     bool showHeightMap = false;
 
@@ -103,13 +111,15 @@ public class CustomTerrainEditor : Editor
         this.splatMapTable = new GUITableState("splatMapTable");
         this.splatHeights = serializedObject.FindProperty("splatHeights");
 
+        //  Vegetation  -------------------------
+        this.maxVegetation = serializedObject.FindProperty("maxVegetation");
+        this.vegetationSpacing = serializedObject.FindProperty("vegetationSpacing");
+
+        this.vegetationTable = new GUITableState("vegetationTable");
+        this.vegetationHeights = serializedObject.FindProperty("vegetationHeights");
+
         //  Smoothing  --------------------------
         this.smoothReps = serializedObject.FindProperty("smoothReps");
-
-        // Height Map  --------------------------
-        this.hmTexture = new Texture2D(this.terrain.terrainData.heightmapResolution, 
-                                       this.terrain.terrainData.heightmapResolution, 
-                                       TextureFormat.ARGB32, false);
     }
 
     public override void OnInspectorGUI()
@@ -266,6 +276,37 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         }
 
+        //  Vegetation  -------------------------
+        this.showVegetation = EditorGUILayout.Foldout(this.showVegetation, "Vegetation");
+        if (this.showVegetation)
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            EditorGUILayout.IntSlider(this.maxVegetation, 1, 10000, new GUIContent("Max Vegetation"));
+            EditorGUILayout.IntSlider(this.vegetationSpacing, 1, 25, new GUIContent("Vegetation Spacing"));
+            
+            this.splatMapTable = GUITableLayout.DrawTable(this.vegetationTable, this.vegetationHeights);
+
+            GUILayout.Space(20);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("+"))
+            {
+                terrain.AddVegetationHeight();
+            }
+
+            if (GUILayout.Button("-"))
+            {
+                terrain.RemoveVegetationHeight();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Apply Vegetation"))
+            {
+                terrain.VegetationMaps();
+            }
+
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        }
+
         //  Smoothing  --------------------------
         this.showSmooth = EditorGUILayout.Foldout(this.showSmooth, "Smoothing");
         if (this.showSmooth)
@@ -289,6 +330,8 @@ public class CustomTerrainEditor : Editor
         this.showHeightMap = EditorGUILayout.Foldout(this.showHeightMap, "Height Map");
         if (this.showHeightMap)
         {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             int hmtSize = (int) (EditorGUIUtility.currentViewWidth - 100);
@@ -301,6 +344,10 @@ public class CustomTerrainEditor : Editor
 
             if (GUILayout.Button("Refresh", GUILayout.Width(hmtSize)))
             {
+                this.hmTexture = new Texture2D(this.terrain.terrainData.heightmapResolution, 
+                                               this.terrain.terrainData.heightmapResolution, 
+                                               TextureFormat.ARGB32, false);
+
                 float[,] heightMap = this.terrain.terrainData.GetHeights(0, 0, this.terrain.terrainData.heightmapResolution, 
                                                                                this.terrain.terrainData.heightmapResolution);
 

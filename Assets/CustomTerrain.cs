@@ -51,13 +51,13 @@ public class CustomTerrain : MonoBehaviour
     public enum VoronoiType { TestCase = 0, Linear = 1, Power = 2, Combined = 3, SinPow = 4 }
     public VoronoiType voronoiType = VoronoiType.Linear;
 
-    //  Mid Point Displacement  -----------------
+    //  Midpoint Displacement  ------------------
     public float mpdHeightMin = -2.0f;
     public float mpdHeightMax = 2.0f;
     public float mpdDampener = 2.0f;
     public float mpdRoughness = 2.0f;
 
-   // Splat Maps  ------------------------------    
+   //  Splat Maps  ------------------------------
     [System.Serializable]
     public class SplatHeights
     {
@@ -80,23 +80,48 @@ public class CustomTerrain : MonoBehaviour
         new SplatHeights()  //  Initialize Index 0  --  Table cannot be Empty
     };
 
+    //  Vegetation  -----------------------------
+    public int maxVegetation = 5000;
+    public int vegetationSpacing = 5;
+
+    [System.Serializable]
+    public class VegetationHeights
+    {
+        public GameObject mesh;
+        public float minHeight = 0.1f;
+        public float maxHeight = 0.2f;
+        public float minSlope = 0f;
+        public float maxSlope = 1.5f;
+        public bool remove = false;
+    }
+
+    public List<VegetationHeights> vegetationHeights = new List<VegetationHeights>()
+    {
+        new VegetationHeights()  //  Initialize Index 0  --  Table cannot be Empty
+    };
+
     //  Smoothing  ------------------------------
     public int smoothReps = 1;
 
-    //  General Properties  ---------------------
     public Terrain terrain;
     public TerrainData terrainData;
     public int heightMapResolution;
 
+    public enum TagType { Tag = 0, Layer = 1 }
+    [SerializeField] private int terrainLayer = -1;
+
     private void Awake() 
     {
         SerializedObject tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+        
         SerializedProperty tagsProp = tagManager.FindProperty("tags");
+        AddTag(tagsProp, "Terrain", TagType.Tag);
+        AddTag(tagsProp, "Cloud", TagType.Tag);
+        AddTag(tagsProp, "Shore", TagType.Tag);
+        tagManager.ApplyModifiedProperties();
 
-        AddTag(tagsProp, "Terrain");
-        AddTag(tagsProp, "Cloud");
-        AddTag(tagsProp, "Shore");
-
+        SerializedProperty layerProp = tagManager.FindProperty("layers");
+        this.terrainLayer = AddTag(layerProp, "Terrain", TagType.Layer);
         tagManager.ApplyModifiedProperties();
 
         this.gameObject.tag = "Terrain";
@@ -110,22 +135,36 @@ public class CustomTerrain : MonoBehaviour
         this.heightMapResolution = this.terrainData.heightmapResolution;
     }
 
-    private void AddTag(SerializedProperty tagsProp, string newTag)
+    private int AddTag(SerializedProperty tagsProp, string newTag, TagType tType)
     {
         bool found = false;
 
         for (int i = 0; i< tagsProp.arraySize; i++)
         {
             SerializedProperty t = tagsProp.GetArrayElementAtIndex(i);
-            if (t.stringValue.Equals(newTag)) { found = true; break; }
+            if (t.stringValue.Equals(newTag)) { found = true; return i; }
         }
 
-        if (!found)
+        if (!found && tType == TagType.Tag)
         {
             tagsProp.InsertArrayElementAtIndex(0);
             SerializedProperty newTagProp = tagsProp.GetArrayElementAtIndex(0);
             newTagProp.stringValue = newTag;
         }
+        else if (!found && tType == TagType.Layer)
+        {
+            for (int j = 8; j < tagsProp.arraySize; j++)
+            {
+                SerializedProperty newLayer = tagsProp.GetArrayElementAtIndex(j);
+                if (newLayer.stringValue == "")
+                {
+                    newLayer.stringValue = newTag;
+                    return j;
+                }
+            }
+        }
+
+        return -1;
     }
 
     float[,] GetHeightMap()
@@ -138,6 +177,7 @@ public class CustomTerrain : MonoBehaviour
             return this.terrainData.GetHeights(0, 0, this.heightMapResolution, this.heightMapResolution);
     }
     
+    //  Random  ---------------------------------
     public void RandomTerrain()
     {
         float[,] heightMap = GetHeightMap();
@@ -152,6 +192,7 @@ public class CustomTerrain : MonoBehaviour
         this.terrainData.SetHeights(0, 0, heightMap);
     }
 
+    //  Load  -----------------------------------
     public void LoadTexture()
     {
         float[,] heightMap = GetHeightMap();
@@ -168,6 +209,7 @@ public class CustomTerrain : MonoBehaviour
         this.terrainData.SetHeights(0, 0, heightMap);
     }
 
+    //  Single Perlin Noise  --------------------
     public void Perlin()
     {
         float[,] heightMap = GetHeightMap();
@@ -185,6 +227,7 @@ public class CustomTerrain : MonoBehaviour
         this.terrainData.SetHeights(0, 0, heightMap);
     }
 
+    //  Multiple Perlin Noise  ------------------
     public void MultiplePerlinTerrain()
     {
         float[,] heightMap = GetHeightMap();
@@ -229,6 +272,7 @@ public class CustomTerrain : MonoBehaviour
         this.perlinParameters = keptPerlinParameters;
     }
 
+    //  Voronoi Tesselation  --------------------
     public void Voronoi()
     {
         float[,] heightMap = GetHeightMap();
@@ -288,6 +332,7 @@ public class CustomTerrain : MonoBehaviour
         }
     }
 
+    //  Midpoint Displacement  ------------------
     public void MidPointDisplacement()
     {
         float[,] heightMap = GetHeightMap();
@@ -379,61 +424,7 @@ public class CustomTerrain : MonoBehaviour
         this.terrainData.SetHeights(0, 0, heightMap);
     }
 
-    public void Smooth()
-    {
-        float[,] originalHeightMap = this.terrainData.GetHeights(0, 0, this.heightMapResolution, this.heightMapResolution);
-        float[,] smoothHeightMap = originalHeightMap;
-        float smoothProgress = 0;
-
-        EditorUtility.DisplayProgressBar("Smoothing Terrain", "Progress", smoothProgress);
-
-        for (int i = 0; i < this.smoothReps; i++)
-        {
-            for (int y = 0; y < this.heightMapResolution; y++)
-            {
-                for (int x = 0; x < this.heightMapResolution; x++)
-                {
-                    float avgHeight = originalHeightMap[ x, y ];
-                    
-                    List<Vector2> neighbours = GenerateNeighbours(new Vector2(x, y), this.heightMapResolution, this.heightMapResolution);
-
-                    foreach (Vector2 n in neighbours)
-                    {
-                        avgHeight += originalHeightMap[(int) n.x, (int) n.y ];
-                    }
-                    smoothHeightMap[ x, y ] = avgHeight / ((float) neighbours.Count + 1);
-                }
-            }
-            originalHeightMap = smoothHeightMap;
-            smoothProgress++;
-
-            EditorUtility.DisplayProgressBar("Smoothing Terrain", "Progress", smoothProgress / this.smoothReps);
-        }
-        this.terrainData.SetHeights(0, 0, smoothHeightMap);
-        EditorUtility.ClearProgressBar();
-    }
-
-    private List<Vector2> GenerateNeighbours(Vector2 pos, int width, int height)
-    {
-        List<Vector2> neighbours = new List<Vector2>();
-
-        for (int y = -1; y < 2; y++)
-        {
-            for (int x = -1; x < 2; x++)
-            {
-                if(!(x == 0 && y == 0))
-                {
-                    Vector2 nPos = new Vector2(Mathf.Clamp(pos.x + x, 0, width - 1), Mathf.Clamp(pos.y + y, 0, height - 1));
-
-                    if (!neighbours.Contains(nPos))
-                         neighbours.Add(nPos);
-                }
-            }
-        }
-
-        return neighbours;
-    }
-
+    //  Splat Maps  -----------------------------
     public void SplatMaps()
     {
         TerrainLayer[] newSplatPrototypes;
@@ -534,6 +525,140 @@ public class CustomTerrain : MonoBehaviour
         {
             v[j] /= total;
         }
+    }
+
+    //  Vegetation ------------------------------
+    public void VegetationMaps()
+    {
+        TreePrototype[] newTreePrototypes;
+        newTreePrototypes = new TreePrototype[this.vegetationHeights.Count];
+        int vindex = 0;
+
+        foreach (VegetationHeights v in this.vegetationHeights)
+        {
+            newTreePrototypes[vindex] = new TreePrototype();
+            newTreePrototypes[vindex].prefab = v.mesh;
+            vindex++;
+        }
+
+        this.terrainData.treePrototypes = newTreePrototypes;
+
+        List<TreeInstance> allVegetation = new List<TreeInstance>();
+
+        for (int z = 0; z < this.terrainData.size.z; z += this.vegetationSpacing)
+        {
+            for (int x = 0; x < this.terrainData.size.x; x += this.vegetationSpacing)
+            {
+                for (int tp = 0; tp < this.terrainData.treePrototypes.Length; tp++)
+                {
+                    float thisHeight = this.terrainData.GetHeight(x, z) / this.terrainData.size.y;
+                    float thisHeightStart = this.vegetationHeights[tp].minHeight;
+                    float thisHeightStop = this.vegetationHeights[tp].maxHeight;
+
+                    if (thisHeight >= thisHeightStart && thisHeight <= thisHeightStop)
+                    {
+                        TreeInstance treeinstance = new TreeInstance();
+
+                        treeinstance.position = new Vector3((x + UnityEngine.Random.Range(-5.0f, 5.0f)) / this.terrainData.size.x, 
+                                                            thisHeight, 
+                                                            (z + UnityEngine.Random.Range(-5.0f, 5.0f)) / this.terrainData.size.z);
+                        treeinstance.rotation = UnityEngine.Random.Range(0, 360);
+                        treeinstance.prototypeIndex = tp;
+                        treeinstance.color = Color.white;
+                        treeinstance.lightmapColor = Color.white;
+                        treeinstance.heightScale = 0.95f;
+                        treeinstance.widthScale = 0.95f;
+
+                        allVegetation.Add(treeinstance);
+                        if (allVegetation.Count >= maxVegetation) goto TREESDONE;
+                    }  
+                }
+            }
+        }
+
+        TREESDONE:
+                this.terrainData.treeInstances = allVegetation.ToArray();
+    }
+
+    public void AddVegetationHeight()
+    {
+        this.vegetationHeights.Add(new VegetationHeights());
+    }
+
+    public void RemoveVegetationHeight()
+    {
+        List<VegetationHeights> keptVegetationHeights = new List<VegetationHeights>();
+
+        for (int i = 0; i < this.vegetationHeights.Count; i++)
+        {
+            if(!this.vegetationHeights[i].remove)
+            {
+                keptVegetationHeights.Add(this.vegetationHeights[i]);
+            }
+        }
+
+        if (keptVegetationHeights.Count == 0)  //  0 Elements retained
+        {
+            keptVegetationHeights.Add(this.vegetationHeights[0]);  //  Always Retain Index 0  --  Table cannot be Empty
+        }
+
+        this.vegetationHeights = keptVegetationHeights;
+    }
+
+    //  Smoothing  ------------------------------
+    public void Smooth()
+    {
+        float[,] originalHeightMap = this.terrainData.GetHeights(0, 0, this.heightMapResolution, this.heightMapResolution);
+        float[,] smoothHeightMap = originalHeightMap;
+        float smoothProgress = 0;
+
+        EditorUtility.DisplayProgressBar("Smoothing Terrain", "Progress", smoothProgress);
+
+        for (int i = 0; i < this.smoothReps; i++)
+        {
+            for (int y = 0; y < this.heightMapResolution; y++)
+            {
+                for (int x = 0; x < this.heightMapResolution; x++)
+                {
+                    float avgHeight = originalHeightMap[ x, y ];
+                    
+                    List<Vector2> neighbours = GenerateNeighbours(new Vector2(x, y), this.heightMapResolution, this.heightMapResolution);
+
+                    foreach (Vector2 n in neighbours)
+                    {
+                        avgHeight += originalHeightMap[(int) n.x, (int) n.y ];
+                    }
+                    smoothHeightMap[ x, y ] = avgHeight / ((float) neighbours.Count + 1);
+                }
+            }
+            originalHeightMap = smoothHeightMap;
+            smoothProgress++;
+
+            EditorUtility.DisplayProgressBar("Smoothing Terrain", "Progress", smoothProgress / this.smoothReps);
+        }
+        this.terrainData.SetHeights(0, 0, smoothHeightMap);
+        EditorUtility.ClearProgressBar();
+    }
+
+    private List<Vector2> GenerateNeighbours(Vector2 pos, int width, int height)
+    {
+        List<Vector2> neighbours = new List<Vector2>();
+
+        for (int y = -1; y < 2; y++)
+        {
+            for (int x = -1; x < 2; x++)
+            {
+                if(!(x == 0 && y == 0))
+                {
+                    Vector2 nPos = new Vector2(Mathf.Clamp(pos.x + x, 0, width - 1), Mathf.Clamp(pos.y + y, 0, height - 1));
+
+                    if (!neighbours.Contains(nPos))
+                         neighbours.Add(nPos);
+                }
+            }
+        }
+
+        return neighbours;
     }
 
     public void ResetTerrain()
