@@ -63,9 +63,9 @@ public class CustomTerrain : MonoBehaviour
     {
         public Texture2D texture = null;
         public float minHeight = 0.1f;
-        public float maxHeight = 0.2f;
+        public float maxHeight = 1f;
         public float minSlope = 0f;
-        public float maxSlope = 1.5f;
+        public float maxSlope = 90f;
         public Vector2 tileOffset = new Vector2(0, 0);
         public Vector2 tileSize = new Vector2(50, 50);
         public float splatOffset = 0.1f;
@@ -85,19 +85,26 @@ public class CustomTerrain : MonoBehaviour
     public int vegetationSpacing = 5;
 
     [System.Serializable]
-    public class VegetationHeights
+    public class VegetationMaps
     {
         public GameObject mesh;
         public float minHeight = 0.1f;
         public float maxHeight = 0.2f;
-        public float minSlope = 0f;
-        public float maxSlope = 1.5f;
+        public float minSlope = 0;
+        public float maxSlope = 90;
+        public float minWidthScale = 0.5f;
+        public float maxWidthScale = 1.0f;
+        public float minHeightScale = 0.5f;
+        public float maxHeightScale = 1.0f;
+        public float density = 0.5f;
+        public Gradient colour = new Gradient();
+        public Color lightColour = Color.white;
         public bool remove = false;
     }
 
-    public List<VegetationHeights> vegetationHeights = new List<VegetationHeights>()
+    public List<VegetationMaps> vegetationMaps = new List<VegetationMaps>()
     {
-        new VegetationHeights()  //  Initialize Index 0  --  Table cannot be Empty
+        new VegetationMaps()  //  Initialize Index 0  --  Table cannot be Empty
     };
 
     //  Smoothing  ------------------------------
@@ -125,6 +132,7 @@ public class CustomTerrain : MonoBehaviour
         tagManager.ApplyModifiedProperties();
 
         this.gameObject.tag = "Terrain";
+        this.gameObject.layer = this.terrainLayer;
     }
 
     private void OnEnable() 
@@ -467,7 +475,7 @@ public class CustomTerrain : MonoBehaviour
                     //  Flip (X,Y) for Steepness Method to prevent Steep Slope placement bug
                     float steepness = this.terrainData.GetSteepness(y / (float) this.terrainData.alphamapHeight,
                                                                     x / (float) this.terrainData.alphamapWidth);
-
+                    
                     if ((heightMap[ x, y ] >= thisHeightStart && heightMap[ x, y ] <= thisHeightStop) &&
                         (steepness >= this.splatHeights[i].minSlope && steepness <= this.splatHeights[i].maxSlope))
                     {
@@ -528,13 +536,13 @@ public class CustomTerrain : MonoBehaviour
     }
 
     //  Vegetation ------------------------------
-    public void VegetationMaps()
+    public void Vegetation()
     {
         TreePrototype[] newTreePrototypes;
-        newTreePrototypes = new TreePrototype[this.vegetationHeights.Count];
+        newTreePrototypes = new TreePrototype[this.vegetationMaps.Count];
         int vindex = 0;
 
-        foreach (VegetationHeights v in this.vegetationHeights)
+        foreach (VegetationMaps v in this.vegetationMaps)
         {
             newTreePrototypes[vindex] = new TreePrototype();
             newTreePrototypes[vindex].prefab = v.mesh;
@@ -551,26 +559,52 @@ public class CustomTerrain : MonoBehaviour
             {
                 for (int tp = 0; tp < this.terrainData.treePrototypes.Length; tp++)
                 {
-                    float thisHeight = this.terrainData.GetHeight(x, z) / this.terrainData.size.y;
-                    float thisHeightStart = this.vegetationHeights[tp].minHeight;
-                    float thisHeightStop = this.vegetationHeights[tp].maxHeight;
+                    if (UnityEngine.Random.Range(0.0f, 1.0f) > this.vegetationMaps[tp].density) continue;
 
-                    if (thisHeight >= thisHeightStart && thisHeight <= thisHeightStop)
+                    float thisHeight = this.terrainData.GetHeight((int) (x * terrainData.alphamapWidth / terrainData.size.x),
+                                                                  (int) (z * terrainData.alphamapHeight / terrainData.size.z)) 
+                                                                       / this.terrainData.size.y;
+                    float thisHeightStart = this.vegetationMaps[tp].minHeight;
+                    float thisHeightStop = this.vegetationMaps[tp].maxHeight;
+
+                    float steepness = this.terrainData.GetSteepness(x / (float) this.terrainData.size.x,
+                                                                    z / (float) this.terrainData.size.z);
+
+                    if ((thisHeight >= thisHeightStart && thisHeight <= thisHeightStop) &&
+                         (steepness >= this.vegetationMaps[tp].minSlope && steepness <= this.vegetationMaps[tp].maxSlope))
                     {
                         TreeInstance treeinstance = new TreeInstance();
 
                         treeinstance.position = new Vector3((x + UnityEngine.Random.Range(-5.0f, 5.0f)) / this.terrainData.size.x, 
                                                             thisHeight, 
                                                             (z + UnityEngine.Random.Range(-5.0f, 5.0f)) / this.terrainData.size.z);
-                        treeinstance.rotation = UnityEngine.Random.Range(0, 360);
-                        treeinstance.prototypeIndex = tp;
-                        treeinstance.color = Color.white;
-                        treeinstance.lightmapColor = Color.white;
-                        treeinstance.heightScale = 0.95f;
-                        treeinstance.widthScale = 0.95f;
 
-                        allVegetation.Add(treeinstance);
-                        if (allVegetation.Count >= maxVegetation) goto TREESDONE;
+                        Vector3 treeWorldPos = new Vector3(treeinstance.position.x * this.terrainData.size.x,
+                                                           treeinstance.position.y * this.terrainData.size.y,
+                                                           treeinstance.position.z * this.terrainData.size.z)
+                                                         + this.transform.position;
+
+                        RaycastHit hit;
+                        int layerMask = 1 << terrainLayer;
+
+                        //  Raycast to Correct Spawn Height
+                        if (Physics.Raycast(treeWorldPos + new Vector3(0, 10, 0), -Vector3.up, out hit, 100, layerMask) ||
+                            Physics.Raycast(treeWorldPos - new Vector3(0, 10, 0), Vector3.up, out hit, 100, layerMask))
+                        {
+                            float treeHeight = (hit.point.y - this.transform.position.y) / this.terrainData.size.y;
+                            treeinstance.position = new Vector3(treeinstance.position.x,
+                                                                treeHeight,
+                                                                treeinstance.position.z);
+
+                            treeinstance.prototypeIndex = tp;
+                            treeinstance.color = vegetationMaps[tp].colour.Evaluate(UnityEngine.Random.Range(0f, 1f));
+                            treeinstance.lightmapColor = vegetationMaps[tp].lightColour;
+                            treeinstance.heightScale = UnityEngine.Random.Range(vegetationMaps[tp].minHeightScale, vegetationMaps[tp].maxHeightScale);
+                            treeinstance.widthScale = UnityEngine.Random.Range(vegetationMaps[tp].minWidthScale, vegetationMaps[tp].maxWidthScale);                            
+
+                            allVegetation.Add(treeinstance);
+                            if (allVegetation.Count >= maxVegetation) goto TREESDONE;
+                        }    
                     }  
                 }
             }
@@ -580,29 +614,29 @@ public class CustomTerrain : MonoBehaviour
                 this.terrainData.treeInstances = allVegetation.ToArray();
     }
 
-    public void AddVegetationHeight()
+    public void AddVegetation()
     {
-        this.vegetationHeights.Add(new VegetationHeights());
+        this.vegetationMaps.Add(new VegetationMaps());
     }
 
-    public void RemoveVegetationHeight()
+    public void RemoveVegetation()
     {
-        List<VegetationHeights> keptVegetationHeights = new List<VegetationHeights>();
+        List<VegetationMaps> keptVegetationMaps = new List<VegetationMaps>();
 
-        for (int i = 0; i < this.vegetationHeights.Count; i++)
+        for (int i = 0; i < this.vegetationMaps.Count; i++)
         {
-            if(!this.vegetationHeights[i].remove)
+            if(!this.vegetationMaps[i].remove)
             {
-                keptVegetationHeights.Add(this.vegetationHeights[i]);
+                keptVegetationMaps.Add(this.vegetationMaps[i]);
             }
         }
 
-        if (keptVegetationHeights.Count == 0)  //  0 Elements retained
+        if (keptVegetationMaps.Count == 0)  //  0 Elements retained
         {
-            keptVegetationHeights.Add(this.vegetationHeights[0]);  //  Always Retain Index 0  --  Table cannot be Empty
+            keptVegetationMaps.Add(this.vegetationMaps[0]);  //  Always Retain Index 0  --  Table cannot be Empty
         }
 
-        this.vegetationHeights = keptVegetationHeights;
+        this.vegetationMaps = keptVegetationMaps;
     }
 
     //  Smoothing  ------------------------------

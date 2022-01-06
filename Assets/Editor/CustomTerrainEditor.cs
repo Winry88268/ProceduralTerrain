@@ -49,7 +49,7 @@ public class CustomTerrainEditor : Editor
     SerializedProperty vegetationSpacing;
 
     GUITableState vegetationTable;
-    SerializedProperty vegetationHeights;
+    SerializedProperty vegetationMaps;
     
     //  Smoothing  ------------------------------
     SerializedProperty smoothReps;
@@ -116,7 +116,7 @@ public class CustomTerrainEditor : Editor
         this.vegetationSpacing = serializedObject.FindProperty("vegetationSpacing");
 
         this.vegetationTable = new GUITableState("vegetationTable");
-        this.vegetationHeights = serializedObject.FindProperty("vegetationHeights");
+        this.vegetationMaps = serializedObject.FindProperty("vegetationMaps");
 
         //  Smoothing  --------------------------
         this.smoothReps = serializedObject.FindProperty("smoothReps");
@@ -284,24 +284,24 @@ public class CustomTerrainEditor : Editor
             EditorGUILayout.IntSlider(this.maxVegetation, 1, 10000, new GUIContent("Max Vegetation"));
             EditorGUILayout.IntSlider(this.vegetationSpacing, 1, 25, new GUIContent("Vegetation Spacing"));
             
-            this.splatMapTable = GUITableLayout.DrawTable(this.vegetationTable, this.vegetationHeights);
+            this.vegetationTable = GUITableLayout.DrawTable(this.vegetationTable, this.vegetationMaps);
 
             GUILayout.Space(20);
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("+"))
             {
-                terrain.AddVegetationHeight();
+                terrain.AddVegetation();
             }
 
             if (GUILayout.Button("-"))
             {
-                terrain.RemoveVegetationHeight();
+                terrain.RemoveVegetation();
             }
             EditorGUILayout.EndHorizontal();
 
             if (GUILayout.Button("Apply Vegetation"))
             {
-                terrain.VegetationMaps();
+                terrain.Vegetation();
             }
 
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);

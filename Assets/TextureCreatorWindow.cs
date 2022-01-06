@@ -170,8 +170,20 @@ public class TextureCreatorWindow : EditorWindow
         if (GUILayout.Button("Save", GUILayout.Width(wSize)))
         {
             byte[] bytes = this.pTexture.EncodeToPNG();
-            System.IO.Directory.CreateDirectory(Application.dataPath + "/SavedTextures");
-            File.WriteAllBytes(Application.dataPath + "/SavedTextures/" + this.filename + ".png", bytes);
+            // Make sure that the destination folder exists
+            string parentFolder = "Assets";
+            string childFolder = "SavedTextures";
+            string folderPath = $"{parentFolder}/{childFolder}";
+            if(!AssetDatabase.IsValidFolder(folderPath))
+                AssetDatabase.CreateFolder(parentFolder, childFolder);
+            // Define the Texture's path in the AAssetDatabase
+            string filePath = $"{folderPath}/{this.filename}.png";
+            File.WriteAllBytes(filePath, bytes);
+            AssetDatabase.Refresh();
+            // Get a reference to the TextureImporter associated to the png that was just saved
+            TextureImporter textureAsset = (TextureImporter)AssetImporter.GetAtPath(filePath);
+            textureAsset.isReadable = true;
+            AssetDatabase.ImportAsset(filePath, ImportAssetOptions.ForceUpdate);
         }
 
         GUILayout.FlexibleSpace();

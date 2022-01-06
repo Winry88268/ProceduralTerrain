@@ -247,8 +247,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61a6c9ce38404574e970e68311758ff6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  heightMapImage: {fileID: 0}
-  heightMapScale: {x: 1, y: 1, z: 1}
+  heightMapImage: {fileID: 2800000, guid: 16d002755199d2a45bd5c5a62c6e3c28, type: 3}
+  heightMapScale: {x: 1, y: 0.33, z: 1}
   randomHeightRange: {x: 0, y: 0.1}
   resetTerrain: 1
   perlinXScale: 0.01
@@ -267,39 +267,98 @@ MonoBehaviour:
     mPerlinPersistance: 8
     mPerlinHeightScale: 0.09
     remove: 0
-  voronoiCount: 1
-  voronoiFallOff: 0.2
-  voronoiDropOff: 0.6
-  voronoiMinHeight: 0.1
-  voronoiMaxHeight: 1
+  voronoiCount: 3
+  voronoiFallOff: 3.75
+  voronoiDropOff: 2.11
+  voronoiMinHeight: 0.29
+  voronoiMaxHeight: 0.625
   voronoiType: 1
   mpdHeightMin: -2
   mpdHeightMax: 2
   mpdDampener: 2
   mpdRoughness: 2
   splatHeights:
-  - texture: {fileID: 0}
-    minHeight: 0.1
-    maxHeight: 0.2
-    minSlope: 0
-    maxSlope: 1.5
+  - texture: {fileID: 2800000, guid: 79d5431cd68194d08a40d2bbe4ebcef9, type: 3}
+    minHeight: 0
+    maxHeight: 0.55
+    minSlope: 15
+    maxSlope: 90
     tileOffset: {x: 0, y: 0}
     tileSize: {x: 50, y: 50}
-    splatOffset: 0.1
-    splatNoiseXScale: 0.01
-    splatNoiseYScale: 0.01
-    splatNoiseScaler: 0.1
+    splatOffset: 0.11
+    splatNoiseXScale: 0.2
+    splatNoiseYScale: 0.4
+    splatNoiseScaler: 0.3
+    remove: 0
+  - texture: {fileID: 2800000, guid: 858e483d613d848cb935156b41553e4d, type: 3}
+    minHeight: 0
+    maxHeight: 0.5
+    minSlope: 0
+    maxSlope: 30
+    tileOffset: {x: 0, y: 0}
+    tileSize: {x: 50, y: 50}
+    splatOffset: 0.2
+    splatNoiseXScale: 0.2
+    splatNoiseYScale: 0.1
+    splatNoiseScaler: 0.2
+    remove: 0
+  - texture: {fileID: 2800000, guid: de70d1ae446e84ee5aa2ea6a420781e8, type: 3}
+    minHeight: 0.8
+    maxHeight: 1
+    minSlope: 0
+    maxSlope: 66
+    tileOffset: {x: 0, y: 0}
+    tileSize: {x: 50, y: 50}
+    splatOffset: 0.4
+    splatNoiseXScale: 0.2
+    splatNoiseYScale: 0.33
+    splatNoiseScaler: 0.33
     remove: 0
   maxVegetation: 5000
-  vegetationSpacing: 5
-  vegetationHeights:
-  - mesh: {fileID: 0}
-    minHeight: 0.1
-    maxHeight: 0.2
+  vegetationSpacing: 17
+  vegetationMaps:
+  - mesh: {fileID: -927199367670048503, guid: 8d302a31bd1113061100b7a844295342, type: 3}
+    minHeight: 0
+    maxHeight: 0.5
     minSlope: 0
-    maxSlope: 1.5
+    maxSlope: 50
+    minWidthScale: 0.5
+    maxWidthScale: 1
+    minHeightScale: 0.5
+    maxHeightScale: 1
+    density: 0.1
+    colour:
+      serializedVersion: 2
+      key0: {r: 1, g: 1, b: 0.8980393, a: 1}
+      key1: {r: 0.5058824, g: 0.1764706, b: 0, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    lightColour: {r: 1, g: 1, b: 1, a: 1}
     remove: 0
-  smoothReps: 1
+  smoothReps: 66
   terrain: {fileID: 474024847}
   terrainData: {fileID: 15600000, guid: a524f5c984800124e80bddebe28079ba, type: 2}
   heightMapResolution: 513
